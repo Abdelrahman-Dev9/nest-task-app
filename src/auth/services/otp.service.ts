@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { OtpPurpose, User } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { randomInt } from 'crypto';
@@ -8,6 +8,8 @@ import { BCRYPT_ROUNDS, OTP_TTL_MS } from '../constants';
 
 @Injectable()
 export class OtpService {
+  private readonly logger = new Logger(OtpService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly mailService: MailService,
@@ -30,6 +32,10 @@ export class OtpService {
         expiresAt: new Date(Date.now() + OTP_TTL_MS),
       },
     });
+
+    if (process.env.NODE_ENV !== 'production') {
+      this.logger.log(`Generated OTP for ${user.email} (${purpose}): ${code}`);
+    }
 
     const mailPurpose =
       purpose === OtpPurpose.REGISTER ? 'register' : 'reset';
