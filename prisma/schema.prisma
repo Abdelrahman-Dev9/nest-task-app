@@ -10,6 +10,7 @@ datasource db {
 enum OtpPurpose {
   REGISTER
   RESET_PASSWORD
+  CHANGE_EMAIL
 }
 
 model User {
@@ -17,10 +18,14 @@ model User {
   name            String
   email           String    @unique
   password        String
+  avatarUrl       String?
+  avatarPublicId  String?
+  pendingEmail    String?
   emailVerifiedAt DateTime?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   otps            Otp[]
+  tasks           Task[]
 }
 
 model Otp {
@@ -34,4 +39,19 @@ model Otp {
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, purpose])
+}
+
+model Task {
+  id            String   @id @default(uuid())
+  title         String
+  notes         String?
+  imageUrl      String?
+  imagePublicId String?
+  done          Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }

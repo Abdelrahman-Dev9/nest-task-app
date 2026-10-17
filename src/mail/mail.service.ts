@@ -57,7 +57,11 @@ export class MailService implements OnModuleInit {
     }
   }
 
-  async sendOtp(email: string, code: string, purpose: 'register' | 'reset') {
+  async sendOtp(
+    email: string,
+    code: string,
+    purpose: 'register' | 'reset' | 'change-email',
+  ) {
     if (!this.transporter || !this.mailUser || !this.mailPass) {
       throw new InternalServerErrorException(
         'Email is not configured. Set MAIL_USER and MAIL_PASSWORD.',
@@ -67,12 +71,16 @@ export class MailService implements OnModuleInit {
     const subject =
       purpose === 'register'
         ? `Verify your ${this.appName} account`
-        : `Reset your ${this.appName} password`;
+        : purpose === 'change-email'
+          ? `Confirm your new ${this.appName} email`
+          : `Reset your ${this.appName} password`;
 
     const intro =
       purpose === 'register'
         ? 'Use this code to verify your email and finish registration.'
-        : 'Use this code to reset your password.';
+        : purpose === 'change-email'
+          ? 'Use this code to confirm your new email address.'
+          : 'Use this code to reset your password.';
 
     const html = `
       <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">

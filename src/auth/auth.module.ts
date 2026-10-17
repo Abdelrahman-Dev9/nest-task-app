@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
@@ -12,7 +12,7 @@ import { AUTH_USE_CASES } from './usecase';
 
 @Module({
   imports: [
-    UsersModule,
+    forwardRef(() => UsersModule),
     MailModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
@@ -29,5 +29,6 @@ import { AUTH_USE_CASES } from './usecase';
   ],
   controllers: [AuthController],
   providers: [OtpService, TokenService, JwtStrategy, ...AUTH_USE_CASES],
+  exports: [OtpService],
 })
 export class AuthModule {}

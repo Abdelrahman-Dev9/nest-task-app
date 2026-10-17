@@ -15,7 +15,7 @@ export class OtpService {
     private readonly mailService: MailService,
   ) {}
 
-  async issueAndSend(user: User, purpose: OtpPurpose) {
+  async issueAndSend(user: User, purpose: OtpPurpose, toEmail?: string) {
     await this.prisma.otp.updateMany({
       where: { userId: user.id, purpose, usedAt: null },
       data: { usedAt: new Date() },
@@ -33,13 +33,19 @@ export class OtpService {
       },
     });
 
+    const recipient = toEmail ?? user.email;
+
     if (process.env.NODE_ENV !== 'production') {
-      this.logger.log(`Generated OTP for ${user.email} (${purpose}): ${code}`);
+      this.logger.log(`Generated OTP for ${recipient} (${purpose}): ${code}`);
     }
 
     const mailPurpose =
-      purpose === OtpPurpose.REGISTER ? 'register' : 'reset';
-    await this.mailService.sendOtp(user.email, code, mailPurpose);
+      purpose === OtpPurpose.REGISTER
+        ? 'register'
+        : purpose === OtpPurpose.CHANGE_EMAIL
+          ? 'change-email'
+          : 'reset';
+    await this.mailService.sendOtp(recipient, code, mailPurpose);
   }
 
   async consume(userId: string, code: string, purpose: OtpPurpose) {
