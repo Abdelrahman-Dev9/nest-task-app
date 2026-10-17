@@ -4,21 +4,33 @@ import {
   Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Resend } from 'resend';
+import * as nodemailer from 'nodemailer';
+import type { Transporter } from 'nodemailer';
 
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
-  private readonly resend: Resend | null;
+  private readonly transporter: Transporter | null;
   private readonly from: string;
   private readonly appName: string;
 
   constructor(private readonly config: ConfigService) {
-    const apiKey = this.config.get<string>('RESEND_API_KEY');
-    this.resend = apiKey ? new Resend(apiKey) : null;
-    this.from =
-      this.config.get<string>('RESEND_FROM_EMAIL') ?? 'onboarding@resend.dev';
+    const user = this.config.get<string>('MAIL_USER');
+    const pass = this.config.get<string>('MAIL_PASSWORD')?.replace(/\s+/g, '');
     this.appName = this.config.get<string>('APP_NAME') ?? 'Snap Task';
+    this.from = this.config.get<string>('MAIL_FROM') ?? user ?? this.appName;
+
+    if (user && pass) {
+      this.transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: { user, pass },
+      });
+    } else {
+      this.transporter = null;
+      this.logger.warn(
+        'MAIL_USER / MAIL_PASSWORD missing — OTP emails will be logged only',
+      );
+    }
   }
 
   async sendOtp(email: string, code: string, purpose: 'register' | 'reset') {
@@ -41,22 +53,21 @@ export class MailService {
       </div>
     `;
 
-    if (!this.resend) {
-      this.logger.warn(
-        `RESEND_API_KEY missing — OTP for ${email}: ${code} (${purpose})`,
-      );
+    if (!this.transporter) {
+      this.logger.warn(`OTP for ${email}: ${code} (${purpose})`);
       return;
     }
 
-    const { error } = await this.resend.emails.send({
-      from: this.from,
-      to: email,
-      subject,
-      html,
-    });
-
-    if (error) {
-      this.logger.error(`Failed to send OTP email: ${error.message}`);
+    try {
+      await this.transporter.sendMail({
+        from: `"${this.appName}" <${this.from}>`,
+        to: email,
+        subject,
+        html,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Failed to send OTP email: ${message}`);
       throw new InternalServerErrorException('Failed to send email');
     }
   }
