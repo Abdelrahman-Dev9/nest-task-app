@@ -11,47 +11,59 @@ import type { Transporter } from 'nodemailer';
 @Injectable()
 export class MailService implements OnModuleInit {
   private readonly logger = new Logger(MailService.name);
-  private readonly transporter: Transporter;
+  private transporter: Transporter | null = null;
   private readonly from: string;
   private readonly appName: string;
-  private readonly mailUser: string;
+  private readonly mailUser: string | null;
+  private readonly mailPass: string | null;
 
   constructor(private readonly config: ConfigService) {
-    const user = this.config.get<string>('MAIL_USER')?.trim();
-    const pass = this.config
-      .get<string>('MAIL_PASSWORD')
-      ?.replace(/\s+/g, '')
-      .trim();
+    this.mailUser = this.config.get<string>('MAIL_USER')?.trim() || null;
+    this.mailPass =
+      this.config.get<string>('MAIL_PASSWORD')?.replace(/\s+/g, '').trim() ||
+      null;
+    this.appName = this.config.get<string>('APP_NAME') ?? 'Snap Task';
+    this.from =
+      this.config.get<string>('MAIL_FROM')?.trim() ||
+      this.mailUser ||
+      this.appName;
 
-    if (!user || !pass) {
-      throw new Error(
-        'MAIL_USER and MAIL_PASSWORD are required to send OTP emails',
+    if (this.mailUser && this.mailPass) {
+      this.transporter = nodemailer.createTransport({
+        host: 'smtp.gmail.com',
+        port: 465,
+        secure: true,
+        auth: {
+          user: this.mailUser,
+          pass: this.mailPass,
+        },
+      });
+    } else {
+      this.logger.warn(
+        'MAIL_USER / MAIL_PASSWORD missing — OTP emails cannot be sent',
       );
     }
-
-    this.mailUser = user;
-    this.appName = this.config.get<string>('APP_NAME') ?? 'Snap Task';
-    this.from = this.config.get<string>('MAIL_FROM')?.trim() || user;
-    this.transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 465,
-      secure: true,
-      auth: { user, pass },
-    });
   }
 
   async onModuleInit() {
+    if (!this.transporter) return;
+
     try {
       await this.transporter.verify();
       this.logger.log(`Gmail SMTP ready for ${this.mailUser}`);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      // Don't crash boot on Vercel cold starts; sendMail will still surface errors.
       this.logger.error(`Gmail SMTP verify failed: ${message}`);
     }
   }
 
   async sendOtp(email: string, code: string, purpose: 'register' | 'reset') {
+    if (!this.transporter || !this.mailUser || !this.mailPass) {
+      throw new InternalServerErrorException(
+        'Email is not configured. Set MAIL_USER and MAIL_PASSWORD.',
+      );
+    }
+
     const subject =
       purpose === 'register'
         ? `Verify your ${this.appName} account`
