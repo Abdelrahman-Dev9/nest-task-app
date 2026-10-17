@@ -46,8 +46,8 @@ export class MailService implements OnModuleInit {
       this.logger.log(`Gmail SMTP ready for ${this.mailUser}`);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
+      // Don't crash boot on Vercel cold starts; sendMail will still surface errors.
       this.logger.error(`Gmail SMTP verify failed: ${message}`);
-      throw error;
     }
   }
 
