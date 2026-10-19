@@ -19,7 +19,7 @@ import {
 } from '@nestjs/swagger';
 import { memoryStorage } from 'multer';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ClerkOrJwtAuthGuard } from '../auth/guards/clerk-or-jwt-auth.guard';
 import { RequestEmailChangeDto } from './dto/request-email-change.dto';
 import { UpdateLocationDto } from './dto/update-location.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
@@ -35,7 +35,7 @@ type AuthUser = {
 
 @ApiTags('users')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(ClerkOrJwtAuthGuard)
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}

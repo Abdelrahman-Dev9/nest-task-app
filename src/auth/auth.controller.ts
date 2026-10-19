@@ -7,7 +7,7 @@ import { RegisterDto } from './dto/register.dto';
 import { ResendOtpDto } from './dto/resend-otp.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { ClerkOrJwtAuthGuard } from './guards/clerk-or-jwt-auth.guard';
 import {
   ForgotPasswordUseCase,
   LoginUseCase,
@@ -74,7 +74,7 @@ export class AuthController {
   }
 
   @Get('me')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(ClerkOrJwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get the current authenticated user' })
   me(@CurrentUser() user: unknown) {
