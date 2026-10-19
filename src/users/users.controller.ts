@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Patch,
   Post,
@@ -20,6 +21,7 @@ import { memoryStorage } from 'multer';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RequestEmailChangeDto } from './dto/request-email-change.dto';
+import { UpdateLocationDto } from './dto/update-location.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { VerifyEmailChangeDto } from './dto/verify-email-change.dto';
@@ -109,5 +111,20 @@ export class UsersController {
   @ApiOperation({ summary: 'Resend email-change OTP' })
   resendEmailChange(@CurrentUser() user: AuthUser) {
     return this.usersService.resendEmailChangeOtp(user.id);
+  }
+
+  @Patch('me/location')
+  @ApiOperation({ summary: 'Save default user location' })
+  updateLocation(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: UpdateLocationDto,
+  ) {
+    return this.usersService.updateLocation(user.id, dto);
+  }
+
+  @Delete('me/location')
+  @ApiOperation({ summary: 'Clear default user location' })
+  clearLocation(@CurrentUser() user: AuthUser) {
+    return this.usersService.clearLocation(user.id);
   }
 }

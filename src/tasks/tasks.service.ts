@@ -47,12 +47,18 @@ export class TasksService {
       imagePublicId = uploaded.publicId;
     }
 
+    const hasLocation =
+      dto.latitude !== undefined && dto.longitude !== undefined;
+
     return this.prisma.task.create({
       data: {
         title: dto.title.trim(),
         notes: dto.notes?.trim() || null,
         imageUrl,
         imagePublicId,
+        latitude: hasLocation ? dto.latitude : null,
+        longitude: hasLocation ? dto.longitude : null,
+        address: hasLocation ? dto.address?.trim() || null : null,
         userId,
       },
     });
@@ -76,6 +82,12 @@ export class TasksService {
       imagePublicId = uploaded.publicId;
     }
 
+    const clearLocation = dto.clearLocation === true;
+    const hasLocation =
+      !clearLocation &&
+      dto.latitude !== undefined &&
+      dto.longitude !== undefined;
+
     return this.prisma.task.update({
       where: { id: taskId },
       data: {
@@ -84,6 +96,15 @@ export class TasksService {
         done: dto.done,
         imageUrl,
         imagePublicId,
+        ...(clearLocation
+          ? { latitude: null, longitude: null, address: null }
+          : hasLocation
+            ? {
+                latitude: dto.latitude,
+                longitude: dto.longitude,
+                address: dto.address?.trim() || null,
+              }
+            : {}),
       },
     });
   }

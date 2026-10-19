@@ -11,6 +11,7 @@ import { BCRYPT_ROUNDS } from '../auth/constants';
 import { OtpService } from '../auth/services/otp.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { RequestEmailChangeDto } from './dto/request-email-change.dto';
+import { UpdateLocationDto } from './dto/update-location.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { VerifyEmailChangeDto } from './dto/verify-email-change.dto';
@@ -195,6 +196,32 @@ export class UsersService {
       message: 'A new OTP has been sent to your new email.',
       email: user.pendingEmail,
     };
+  }
+
+  async updateLocation(userId: string, dto: UpdateLocationDto) {
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        latitude: dto.latitude,
+        longitude: dto.longitude,
+        address: dto.address?.trim() || null,
+      },
+    });
+
+    return this.toPublic(user);
+  }
+
+  async clearLocation(userId: string) {
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        latitude: null,
+        longitude: null,
+        address: null,
+      },
+    });
+
+    return this.toPublic(user);
   }
 
   toPublic(user: User) {
