@@ -69,6 +69,8 @@ export class TasksController {
         latitude: { type: 'number' },
         longitude: { type: 'number' },
         address: { type: 'string' },
+        dueAt: { type: 'string', format: 'date-time' },
+        remindBeforeMinutes: { type: 'number' },
         images: {
           type: 'array',
           items: { type: 'string', format: 'binary' },
@@ -102,6 +104,10 @@ export class TasksController {
         longitude: { type: 'number' },
         address: { type: 'string' },
         clearLocation: { type: 'boolean' },
+        dueAt: { type: 'string', format: 'date-time' },
+        remindBeforeMinutes: { type: 'number' },
+        clearDueAt: { type: 'boolean' },
+        clearRemindBefore: { type: 'boolean' },
         removeImageIds: {
           type: 'string',
           description: 'JSON array of image ids to remove',

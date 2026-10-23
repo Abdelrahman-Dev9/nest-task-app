@@ -59,6 +59,11 @@ export class TasksService {
 
     const hasLocation =
       dto.latitude !== undefined && dto.longitude !== undefined;
+    const dueAt = this.parseDueAt(dto.dueAt);
+    const remindBeforeMinutes =
+      dueAt && dto.remindBeforeMinutes !== undefined
+        ? dto.remindBeforeMinutes
+        : null;
 
     try {
       return await this.prisma.task.create({
@@ -68,6 +73,8 @@ export class TasksService {
           latitude: hasLocation ? dto.latitude : null,
           longitude: hasLocation ? dto.longitude : null,
           address: hasLocation ? dto.address?.trim() || null : null,
+          dueAt,
+          remindBeforeMinutes,
           userId,
           images: uploaded.length
             ? {
@@ -149,6 +156,9 @@ export class TasksService {
           });
         }
 
+        const clearDueAt = dto.clearDueAt === true;
+        const clearRemindBefore = dto.clearRemindBefore === true;
+
         return tx.task.update({
           where: { id: taskId },
           data: {
@@ -165,6 +175,18 @@ export class TasksService {
                     address: dto.address?.trim() || null,
                   }
                 : {}),
+            ...(clearDueAt
+              ? { dueAt: null, remindBeforeMinutes: null }
+              : {
+                  ...(dto.dueAt !== undefined
+                    ? { dueAt: this.parseDueAt(dto.dueAt) }
+                    : {}),
+                  ...(clearRemindBefore
+                    ? { remindBeforeMinutes: null }
+                    : dto.remindBeforeMinutes !== undefined
+                      ? { remindBeforeMinutes: dto.remindBeforeMinutes }
+                      : {}),
+                }),
           },
           include: taskWithImages,
         });
@@ -203,6 +225,15 @@ export class TasksService {
     );
     await this.prisma.task.delete({ where: { id: taskId } });
     return { message: 'Task deleted' };
+  }
+
+  private parseDueAt(raw?: string): Date | null {
+    if (!raw?.trim()) return null;
+    const date = new Date(raw);
+    if (Number.isNaN(date.getTime())) {
+      throw new BadRequestException('Invalid dueAt datetime');
+    }
+    return date;
   }
 
   private parseRemoveImageIds(raw?: string): string[] {

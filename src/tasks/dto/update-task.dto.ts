@@ -2,6 +2,8 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import {
   IsBoolean,
+  IsDateString,
+  IsIn,
   IsNumber,
   IsOptional,
   IsString,
@@ -9,6 +11,7 @@ import {
   Min,
   MinLength,
 } from 'class-validator';
+import { REMIND_BEFORE_OPTIONS } from './create-task.dto';
 
 export class UpdateTaskDto {
   @ApiPropertyOptional({ example: 'Buy groceries' })
@@ -78,4 +81,53 @@ export class UpdateTaskDto {
   @IsOptional()
   @IsString()
   removeImageIds?: string;
+
+  @ApiPropertyOptional({
+    description: 'ISO-8601 due date/time',
+    example: '2026-10-13T15:00:00.000Z',
+  })
+  @IsOptional()
+  @IsDateString()
+  dueAt?: string;
+
+  @ApiPropertyOptional({
+    description: 'Minutes before dueAt to remind (15, 30, 60, 1440)',
+    example: 30,
+    enum: REMIND_BEFORE_OPTIONS,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @IsIn([...REMIND_BEFORE_OPTIONS])
+  remindBeforeMinutes?: number;
+
+  @ApiPropertyOptional({
+    description: 'Set true to clear due date and reminder settings',
+    example: false,
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value === undefined || value === null || value === '') return undefined;
+    if (typeof value === 'boolean') return value;
+    if (value === 'true' || value === '1') return true;
+    if (value === 'false' || value === '0') return false;
+    return value;
+  })
+  @IsBoolean()
+  clearDueAt?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Set true to clear only the advance reminder (keep dueAt)',
+    example: false,
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value === undefined || value === null || value === '') return undefined;
+    if (typeof value === 'boolean') return value;
+    if (value === 'true' || value === '1') return true;
+    if (value === 'false' || value === '0') return false;
+    return value;
+  })
+  @IsBoolean()
+  clearRemindBefore?: boolean;
 }

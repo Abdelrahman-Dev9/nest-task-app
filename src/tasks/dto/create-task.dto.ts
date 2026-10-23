@@ -1,6 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
+  IsDateString,
+  IsIn,
   IsNumber,
   IsOptional,
   IsString,
@@ -8,6 +10,8 @@ import {
   Min,
   MinLength,
 } from 'class-validator';
+
+export const REMIND_BEFORE_OPTIONS = [15, 30, 60, 1440] as const;
 
 export class CreateTaskDto {
   @ApiProperty({ example: 'Buy groceries' })
@@ -40,4 +44,24 @@ export class CreateTaskDto {
   @IsOptional()
   @IsString()
   address?: string;
+
+  @ApiPropertyOptional({
+    description: 'ISO-8601 due date/time (UTC recommended)',
+    example: '2026-10-13T15:00:00.000Z',
+  })
+  @IsOptional()
+  @IsDateString()
+  dueAt?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Minutes before dueAt to remind (15, 30, 60, 1440). Omit for no advance reminder.',
+    example: 30,
+    enum: REMIND_BEFORE_OPTIONS,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @IsIn([...REMIND_BEFORE_OPTIONS])
+  remindBeforeMinutes?: number;
 }
