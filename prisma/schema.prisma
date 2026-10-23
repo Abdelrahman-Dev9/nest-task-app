@@ -15,7 +15,6 @@ enum OtpPurpose {
 
 model User {
   id              String    @id @default(uuid())
-  clerkId         String?   @unique
   name            String
   email           String    @unique
   password        String?

@@ -34,10 +34,6 @@ export class UsersService {
     return this.prisma.user.findUnique({ where: { id } });
   }
 
-  findByClerkId(clerkId: string): Promise<User | null> {
-    return this.prisma.user.findUnique({ where: { clerkId } });
-  }
-
   create(data: {
     name: string;
     email: string;
@@ -48,39 +44,6 @@ export class UsersService {
         name: data.name,
         email: data.email.toLowerCase(),
         password: data.password,
-      },
-    });
-  }
-
-  async linkOrCreateClerkUser(data: {
-    clerkId: string;
-    email: string;
-    name: string;
-    avatarUrl?: string | null;
-  }): Promise<User> {
-    const email = data.email.toLowerCase();
-    const existingByEmail = await this.findByEmail(email);
-
-    if (existingByEmail) {
-      return this.prisma.user.update({
-        where: { id: existingByEmail.id },
-        data: {
-          clerkId: data.clerkId,
-          name: existingByEmail.name || data.name,
-          avatarUrl: existingByEmail.avatarUrl ?? data.avatarUrl ?? null,
-          emailVerifiedAt: existingByEmail.emailVerifiedAt ?? new Date(),
-        },
-      });
-    }
-
-    return this.prisma.user.create({
-      data: {
-        clerkId: data.clerkId,
-        email,
-        name: data.name,
-        password: null,
-        avatarUrl: data.avatarUrl ?? null,
-        emailVerifiedAt: new Date(),
       },
     });
   }
@@ -119,9 +82,7 @@ export class UsersService {
     }
 
     if (!user.password) {
-      throw new BadRequestException(
-        'This account uses social sign-in. Set a password in Clerk or continue with Google/Apple/Facebook.',
-      );
+      throw new BadRequestException('No password is set for this account');
     }
 
     const matches = await bcrypt.compare(dto.currentPassword, user.password);

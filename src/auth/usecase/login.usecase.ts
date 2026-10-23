@@ -18,9 +18,7 @@ export class LoginUseCase {
     }
 
     if (!user.password) {
-      throw new UnauthorizedException(
-        'This account uses social sign-in. Continue with Google, Apple, or Facebook.',
-      );
+      throw new UnauthorizedException('Invalid email or password');
     }
 
     const valid = await bcrypt.compare(dto.password, user.password);
