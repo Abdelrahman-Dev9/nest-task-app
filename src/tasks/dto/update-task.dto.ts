@@ -69,4 +69,13 @@ export class UpdateTaskDto {
   })
   @IsBoolean()
   clearLocation?: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      'JSON array or comma-separated list of TaskImage ids to remove',
+    example: '["uuid-1","uuid-2"]',
+  })
+  @IsOptional()
+  @IsString()
+  removeImageIds?: string;
 }

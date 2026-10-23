@@ -45,19 +45,30 @@ model Otp {
 }
 
 model Task {
-  id            String   @id @default(uuid())
-  title         String
-  notes         String?
-  imageUrl      String?
-  imagePublicId String?
-  latitude      Float?
-  longitude     Float?
-  address       String?
-  done          Boolean  @default(false)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  userId        String
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String      @id @default(uuid())
+  title     String
+  notes     String?
+  latitude  Float?
+  longitude Float?
+  address   String?
+  done      Boolean     @default(false)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  images    TaskImage[]
 
   @@index([userId])
+}
+
+model TaskImage {
+  id        String   @id @default(uuid())
+  url       String
+  publicId  String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
 }
